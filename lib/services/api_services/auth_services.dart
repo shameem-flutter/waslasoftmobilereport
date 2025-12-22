@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:waslasoftreport/constants/api_client.dart';
+import 'package:waslasoftreport/constants/api_endpoints.dart';
 
 class AuthService {
   final Dio _dio = ApiClient.dio;
@@ -10,7 +11,7 @@ class AuthService {
     required String password,
   }) async {
     final response = await _dio.post(
-      '/login',
+      ApiEndpoints.login,
       data: {'username': username, 'password': password},
     );
 
