@@ -13,8 +13,8 @@ class LoginScreen1 extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen1> {
   bool isLoading = false;
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController(text: "shameem");
+  final _passwordController = TextEditingController(text: "waslasoft");
   bool _isPasswordVisible = false;
 
   @override
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen1> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.teal.withValues(alpha: 0.20), Colors.teal.shade100],
+            colors: [Colors.teal.withValues(alpha: 0.10), whiteColor],
           ),
         ),
         child: Center(
@@ -107,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen1> {
                         _buildMinimalTextField(
                           controller: _usernameController,
                           label: 'Username',
+
                           icon: Icons.alternate_email_rounded,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -218,8 +219,6 @@ class _LoginScreenState extends State<LoginScreen1> {
     bool isPasswordVisible = false,
     VoidCallback? onToggleVisibility,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -230,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen1> {
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: colorScheme.primary.withValues(alpha: 0.8),
+              color: primaryColor,
               letterSpacing: 1.2,
             ),
           ),
@@ -241,15 +240,8 @@ class _LoginScreenState extends State<LoginScreen1> {
           style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: 'Enter your $label',
-            hintStyle: GoogleFonts.inter(
-              fontSize: 14,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-            prefixIcon: Icon(
-              icon,
-              size: 20,
-              color: colorScheme.primary.withValues(alpha: 0.6),
-            ),
+            hintStyle: GoogleFonts.inter(fontSize: 14, color: blackColor),
+            prefixIcon: Icon(icon, size: 20, color: primaryColor),
             suffixIcon: isPassword
                 ? IconButton(
                     icon: Icon(
@@ -257,17 +249,13 @@ class _LoginScreenState extends State<LoginScreen1> {
                           ? Icons.visibility_off_rounded
                           : Icons.visibility_rounded,
                       size: 20,
-                      color: colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.4,
-                      ),
+                      color: primaryColor,
                     ),
                     onPressed: onToggleVisibility,
                   )
                 : null,
             filled: true,
-            fillColor: colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.3,
-            ),
+            fillColor: whiteColor,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 18,
@@ -282,17 +270,11 @@ class _LoginScreenState extends State<LoginScreen1> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.primary.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: colorScheme.error.withValues(alpha: 0.5),
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: redColor, width: 1.5),
             ),
           ),
           validator: validator,

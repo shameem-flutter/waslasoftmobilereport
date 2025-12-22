@@ -23,7 +23,10 @@ class MyApp extends StatelessWidget {
       title: 'Waslasoft Report',
       debugShowCheckedModeBanner: false,
       home: const LoginScreen1(),
-      routes: {"/home": (context) => Homescreen()},
+      routes: {
+        "/home": (context) => Homescreen(),
+        "/login": (context) => LoginScreen1(),
+      },
     );
   }
 }
