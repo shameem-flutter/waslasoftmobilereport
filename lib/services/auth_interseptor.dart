@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:waslasoftreport/constants/api_endpoints.dart';
 
 class AuthInterceptor extends Interceptor {
   @override
@@ -7,14 +8,15 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token != null && token.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $token';
+    if (options.path.contains(ApiEndpoints.login)) {
+      return handler.next(options);
     }
-
-    super.onRequest(options, handler);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+    if (token != null && token.isNotEmpty) {
+      options.headers['Authorization'] = 'token $token';
+    }
+    handler.next(options);
   }
 
   @override

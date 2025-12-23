@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:waslasoftreport/constants/colors.dart';
+import 'package:waslasoftreport/screens/salesreport_screen.dart';
 import 'package:waslasoftreport/services/api_services/auth_services.dart';
 import 'package:waslasoftreport/utilities/gap_func.dart';
 
@@ -83,7 +84,14 @@ class _HomescreenState extends State<Homescreen> {
                         children: [
                           reportCard(
                             title: "SALES BACKOFFICE REPORTS",
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SalesreportScreen(),
+                                ),
+                              );
+                            },
                           ),
                           reportCard(title: "CUSTOMER REPORT", onTap: () {}),
                         ],
