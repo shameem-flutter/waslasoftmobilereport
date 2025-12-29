@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:waslasoftreport/constants/colors.dart';
 import 'package:waslasoftreport/utilities/gap_func.dart';
+import 'package:waslasoftreport/utilities/pdf_utils.dart';
 
 import '../models/sales_report.dart';
 import '../services/salesreportservice.dart';
@@ -23,24 +24,13 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
   bool isLoading = false;
   List<SalesreportModel> reportList = [];
 
-  static const int _rowsPerPage = 10;
-  int _currentPage = 0;
-
   final DateFormat _apiFormat = DateFormat('yyyy-MM-dd');
   final DateFormat _uiFormat = DateFormat('dd/MM/yyyy');
-
-  int get _totalPages => (reportList.length / _rowsPerPage).ceil();
-
-  List<SalesreportModel> get _paginatedReports {
-    final start = _currentPage * _rowsPerPage;
-    final end = (start + _rowsPerPage).clamp(0, reportList.length);
-    return start >= reportList.length ? [] : reportList.sublist(start, end);
-  }
 
   @override
   void initState() {
     super.initState();
-    _loadReport();
+    // Data will only load when user clicks "View Report" button
   }
 
   Future<void> _loadReport() async {
@@ -51,7 +41,7 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
         _apiFormat.format(toDate),
       );
 
-      // Sort data before pagination
+      // Sort data
       data.sort((a, b) {
         final dateCompare = a.saleDate.compareTo(b.saleDate);
         if (dateCompare != 0) return dateCompare;
@@ -61,7 +51,6 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
       if (mounted) {
         setState(() {
           reportList = data;
-          _currentPage = 0;
         });
       }
     } catch (e) {
@@ -136,6 +125,110 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
     );
   }
 
+  Widget _buildPaymentSummary() {
+    double totalCash = reportList.fold(0.0, (sum, r) => sum + r.cashPaidAmount);
+    double totalBank = reportList.fold(0.0, (sum, r) => sum + r.bankPayment);
+    double totalCredit = reportList.fold(
+      0.0,
+      (sum, r) => sum + r.creditCardPaidAmount,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Card(
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Payment Summary',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              vertGap(16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      'Cash Payment',
+                      totalCash,
+                      Icons.money_rounded,
+                      Colors.green,
+                    ),
+                  ),
+                  horiGap(12),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      'Bank Payment',
+                      totalBank,
+                      Icons.account_balance_rounded,
+                      Colors.blue,
+                    ),
+                  ),
+                  horiGap(12),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      'Credit Payment',
+                      totalCredit,
+                      Icons.credit_card_rounded,
+                      Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(
+    String label,
+    double amount,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          vertGap(8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          vertGap(4),
+          Text(
+            '₹${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,83 +246,123 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
         elevation: 1,
       ),
       backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          // Filter Card
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        _buildDateField(
-                          'From Date',
-                          fromDate,
-                          (d) => setState(() => fromDate = d),
-                        ),
-                        horiGap(16),
-                        _buildDateField(
-                          'To Date',
-                          toDate,
-                          (d) => setState(() => toDate = d),
-                        ),
-                      ],
-                    ),
-                    vertGap(12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: isLoading ? null : _loadReport,
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          _buildDateField(
+                            'From Date',
+                            fromDate,
+                            (d) => setState(() => fromDate = d),
+                          ),
+                          horiGap(16),
+                          _buildDateField(
+                            'To Date',
+                            toDate,
+                            (d) => setState(() => toDate = d),
+                          ),
+                        ],
+                      ),
+                      vertGap(12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: isLoading ? null : _loadReport,
+                              icon: isLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.search_rounded,
+                                      size: 20,
+                                      color: whiteColor,
+                                    ),
+                              label: Text(
+                                isLoading ? 'Loading...' : 'View Report',
+                                style: const TextStyle(
+                                  color: whiteColor,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              )
-                            : const Icon(
-                                Icons.search_rounded,
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryColor,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                          horiGap(12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: reportList.isNotEmpty
+                                  ? _printReport
+                                  : null,
+                              icon: const Icon(
+                                Icons.print_rounded,
                                 size: 20,
                                 color: whiteColor,
                               ),
-                        label: Text(
-                          isLoading ? 'Loading...' : 'View Report',
-                          style: const TextStyle(
-                            color: whiteColor,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                              label: const Text(
+                                'Print',
+                                style: TextStyle(
+                                  color: whiteColor,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[600],
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Table Area
-          Expanded(
-            child: isLoading && reportList.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+            // Data Area
+            isLoading && reportList.isEmpty
+                ? Container(
+                    height: 400,
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(),
+                  )
                 : reportList.isEmpty
-                ? Center(
+                ? Container(
+                    height: 400,
+                    alignment: Alignment.center,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -240,121 +373,135 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
                         ),
                         vertGap(12),
                         const Text(
-                          'No data found',
+                          'No data available',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        vertGap(8),
+                        Text(
+                          'Select dates and click "View Report"',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
                       ],
                     ),
                   )
-                : _buildReportTable(),
-          ),
-        ],
+                : Column(
+                    children: [
+                      if (reportList.isNotEmpty && !isLoading)
+                        _buildPaymentSummary(),
+                      _buildGrandTotal(),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: _buildDataTable(),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Grand Total
+                      vertGap(8),
+                    ],
+                  ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildReportTable() {
-    double totalNet = reportList.fold(0.0, (sum, r) {
+  Widget _buildDataTable() {
+    // Calculate column totals
+    double totalDiscount = reportList.fold(
+      0.0,
+      (sum, r) => sum + r.discountAmountTotal,
+    );
+    double totalCash = reportList.fold(0.0, (sum, r) => sum + r.cashPaidAmount);
+    double totalCard = reportList.fold(
+      0.0,
+      (sum, r) => sum + r.creditCardPaidAmount,
+    );
+    double totalBank = reportList.fold(0.0, (sum, r) => sum + r.bankPayment);
+    double totalBeforeTax = reportList.fold(
+      0.0,
+      (sum, r) => sum + (r.subTotal - r.discountAmountTotal),
+    );
+    double totalTax = reportList.fold(0.0, (sum, r) => sum + r.taxAmountTotal);
+    double grandTotal = reportList.fold(0.0, (sum, r) {
       final beforeTax = r.subTotal - r.discountAmountTotal;
       return sum + (beforeTax + r.taxAmountTotal);
     });
 
-    return Column(
-      children: [
-        // Table with scrolling
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            physics: const BouncingScrollPhysics(),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: _buildDataTable(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Pagination Controls
-        _buildPaginationControls(),
-
-        // Grand Total
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [primaryColor, primaryColor.withOpacity(0.8)],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: primaryColor.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'GRAND TOTAL',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                '₹${totalNet.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        vertGap(4),
-      ],
-    );
-  }
-
-  Widget _buildDataTable() {
     return Table(
       border: TableBorder.all(color: Colors.grey.shade300, width: 1),
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       columnWidths: const {
-        0: FixedColumnWidth(65), // Inv No
-        1: FixedColumnWidth(90), // Date
-        2: FixedColumnWidth(110), // Pay Mode
-        3: FixedColumnWidth(85), // Discount
-        4: FixedColumnWidth(85), // Cash
-        5: FixedColumnWidth(85), // Card
-        6: FixedColumnWidth(85), // Bank
-        7: FixedColumnWidth(95), // Before Tax
-        8: FixedColumnWidth(80), // Tax
-        9: FixedColumnWidth(95), // Net Total
+        0: FixedColumnWidth(80), // Inv No
+        1: FixedColumnWidth(110), // Date
+        2: FixedColumnWidth(100), // Pay Mode
+        3: FixedColumnWidth(100), // Discount
+        4: FixedColumnWidth(100), // Cash
+        5: FixedColumnWidth(100), // Card
+        6: FixedColumnWidth(100), // Bank
+        7: FixedColumnWidth(110), // Before Tax
+        8: FixedColumnWidth(100), // Tax
+        9: FixedColumnWidth(110), // Net Total
       },
-      children: [_headerRow(), ..._paginatedReports.map(_dataRow)],
+      children: [
+        _headerRow(),
+        ...reportList.map(_dataRow),
+        // Total Row
+        TableRow(
+          decoration: BoxDecoration(color: primaryColor.withOpacity(0.1)),
+          children: [
+            _buildTotalCell('TOTAL', isBold: true),
+            _buildTotalCell(''),
+            _buildTotalCell(''),
+            _buildTotalCell(totalDiscount.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(totalCash.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(totalCard.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(totalBank.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(totalBeforeTax.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(totalTax.toStringAsFixed(2), isBold: true),
+            _buildTotalCell(grandTotal.toStringAsFixed(2), isBold: true),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTotalCell(String text, {bool isBold = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+          fontSize: 13,
+          color: primaryColor,
+        ),
+      ),
     );
   }
 
@@ -408,70 +555,53 @@ class _SalesreportScreenState extends State<SalesreportScreen> {
     return mode;
   }
 
-  Widget _buildPaginationControls() {
-    if (_totalPages <= 1) return const SizedBox.shrink();
+  Future<void> _printReport() async {
+    await PdfUtils.printSalesReport(
+      reportList: reportList,
+      fromDate: fromDate,
+      toDate: toDate,
+    );
+  }
+
+  Widget _buildGrandTotal() {
+    double totalNet = reportList.fold(0.0, (sum, r) {
+      final beforeTax = r.subTotal - r.discountAmountTotal;
+      return sum + (beforeTax + r.taxAmountTotal);
+    });
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primaryColor, primaryColor.withOpacity(0.8)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: _currentPage > 0
-                ? () => setState(() => _currentPage--)
-                : null,
-            icon: Icon(
-              Icons.chevron_left_rounded,
-              color: _currentPage > 0 ? primaryColor : Colors.grey,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey.shade300),
-              ),
+          const Text(
+            'GRAND TOTAL',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
             ),
           ),
-          horiGap(12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryColor.withOpacity(0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              'Page ${_currentPage + 1} / $_totalPages',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          horiGap(12),
-          IconButton(
-            onPressed: _currentPage < _totalPages - 1
-                ? () => setState(() => _currentPage++)
-                : null,
-            icon: Icon(
-              Icons.chevron_right_rounded,
-              color: _currentPage < _totalPages - 1
-                  ? primaryColor
-                  : Colors.grey,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey.shade300),
-              ),
+          Text(
+            '₹${totalNet.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -487,14 +617,14 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       child: Text(
         text,
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 12.5,
+          fontSize: 13,
         ),
       ),
     );
@@ -517,7 +647,7 @@ class _Cell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       child: Text(
         text,
         textAlign: center
@@ -526,9 +656,9 @@ class _Cell extends StatelessWidget {
             ? TextAlign.right
             : TextAlign.left,
         style: TextStyle(
-          fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-          fontSize: 12.5,
-          color: Colors.black87,
+          fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+          fontSize: 13,
+          color: Colors.black,
         ),
       ),
     );
