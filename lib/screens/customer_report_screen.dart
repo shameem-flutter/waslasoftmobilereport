@@ -8,6 +8,7 @@ import 'package:waslasoftreport/utilities/gap_func.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:waslasoftreport/widgets/ip_config_button.dart';
 
 class CustomerReportScreen extends StatefulWidget {
   const CustomerReportScreen({super.key});
@@ -93,6 +94,10 @@ class _CustomerReportScreenState extends State<CustomerReportScreen> {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 1,
+        actions: const [
+          IpConfigButton(),
+          SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

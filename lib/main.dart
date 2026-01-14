@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:waslasoftreport/constants/api_endpoints.dart';
 import 'package:waslasoftreport/screens/homescreen.dart';
 import 'package:waslasoftreport/screens/login_screen.dart';
@@ -8,6 +9,7 @@ import 'package:waslasoftreport/services/api_services/auth_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = true;
   await ApiEndpoints.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

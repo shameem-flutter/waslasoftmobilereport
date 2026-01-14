@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:waslasoftreport/constants/colors.dart';
+import 'package:waslasoftreport/widgets/ip_config_button.dart';
 import 'package:waslasoftreport/services/api_services/auth_services.dart';
-import 'package:waslasoftreport/widgets/ip_config_dialog.dart';
 
 class LoginScreen1 extends StatefulWidget {
   const LoginScreen1({super.key});
@@ -65,35 +65,7 @@ class _LoginScreenState extends State<LoginScreen1> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => const IpConfigDialog(),
-              );
-            },
-            icon: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.teal.withValues(alpha: 0.12),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'IP',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.teal,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            tooltip: 'Configure IP Address',
-          ),
-        ],
+        actions: const [IpConfigButton()],
       ),
       body: Container(
         width: double.infinity,

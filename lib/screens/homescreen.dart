@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:waslasoftreport/constants/colors.dart';
 import 'package:waslasoftreport/screens/customer_report_screen.dart';
 import 'package:waslasoftreport/screens/salesreport_screen.dart';
+import 'package:waslasoftreport/widgets/ip_config_button.dart';
 import 'package:waslasoftreport/services/api_services/auth_services.dart';
 import 'package:waslasoftreport/utilities/gap_func.dart';
 
@@ -62,6 +63,7 @@ class _HomescreenState extends State<Homescreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         actions: [
+          const IpConfigButton(),
           IconButton(
             onPressed: isLoading
                 ? null
